@@ -1,4 +1,5 @@
 package src;
+import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -22,11 +23,12 @@ public class Emissor {
         factory.setHost("localhost");
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.exchangeDeclare(EXCHANGE_NAME, "topic");
+            channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.TOPIC);
 
             while (true) {
-                String status = checkServiceStatus();
-                String message = createMessage(status);
+                int cpuUsage = new Random().nextInt(100);
+                String status = cpuUsage > 90 ? "vermelho" : cpuUsage > 70 ? "amarelo" : "azul";
+                String message = createMessage(status, cpuUsage);
                 String routingKey = serverName + "." + serviceName;
                 channel.basicPublish(EXCHANGE_NAME, routingKey, null, message.getBytes(StandardCharsets.UTF_8));
                 System.out.println("Sent: " + message);
@@ -36,17 +38,13 @@ public class Emissor {
         }
     }
 
-    private String checkServiceStatus() {
-
-        int cpuUsage = new Random().nextInt(100);
-        String status = cpuUsage > 90 ? "vermelho" : cpuUsage > 70 ? "amarelo" : "azul";
-        return status;
-    }
-
-    private String createMessage(String status) {
+    private String createMessage(String status, int cpuUsage) throws Exception {
+        int memoryUsage = new Random().nextInt(100);
+        int responseTime = new Random().nextInt(100);
         return "{ \"timestamp\": \"" + Instant.now() + "\", \"service\": \"" + serviceName +
-                "\", \"status\": \"" + status + "\", \"server\": \"" + serverName + "\" }";
-        //tem que fazer isso de metrics ainda que eu n entendi
+                "\", \"status\": \"" + status + "\", \"server\": \"" + serverName + "\", " +
+                "\"metrics\": { \"cpu_usage\": " + cpuUsage + ", \"memory_usage\": " + memoryUsage +
+                ", \"response_time\": " + responseTime + " } }";
     }
 
     public static void main(String[] args) throws Exception {

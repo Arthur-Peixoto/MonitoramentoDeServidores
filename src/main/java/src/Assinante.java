@@ -13,7 +13,7 @@ public class Assinante {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
-        channel.exchangeDeclare(EXCHANGE_NAME, "topic");
+        channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.TOPIC);
         String queueName = channel.queueDeclare().getQueue();
         channel.queueBind(queueName, EXCHANGE_NAME, "#");
 
@@ -30,12 +30,23 @@ public class Assinante {
 
     private static void handleServiceStatus(String message) {
         if (message.contains("vermelho") || message.contains("amarelo")) {
-            generateWorkOrder(message);
+            try {
+                generateWorkOrder(message);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
-    private static void generateWorkOrder(String message) {
-        System.out.println("Gerando ordem de serviço: " + message);
-        // tem que fazer enviar mensagem para a fila ainda
+    private static void generateWorkOrder(String message) throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        try (Connection connection = factory.newConnection();
+             Channel channel = connection.createChannel()) {
+            channel.queueDeclare("maintenance_queue", false, false, false, null);
+            channel.basicPublish("", "maintenance_queue", null, message.getBytes(StandardCharsets.UTF_8));
+            System.out.println("Gerando ordem de serviço: " + message);
+        }
     }
+
 }
