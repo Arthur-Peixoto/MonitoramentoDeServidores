@@ -14,14 +14,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class Emissor {
+public class Emissor3 {
 
     private final String serverName;
     private final String serviceName;
     private static final String EXCHANGE_NAME = "service_status";
     private ScheduledExecutorService scheduler;
 
-    public Emissor(String serverName, String serviceName) {
+    public Emissor3(String serverName, String serviceName) {
         this.serverName = serverName;
         this.serviceName = serviceName;
     }
@@ -83,8 +83,8 @@ public class Emissor {
 
     public static void main(String[] args) {
         Stream.of(
-                new Emissor("Servidor1", "bancodedados"),
-                new Emissor("Servidor1", "webserver")
+                new Emissor("Servidor3", "bancodedados"),
+                new Emissor("Servidor3", "Serviço3")
         ).forEach(emissor -> {
             try {
                 emissor.start();
